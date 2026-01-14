@@ -1,36 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Multi-Language Female TTS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f0f0f0; }
-    textarea { width: 100%; height: 140px; font-size:16px; margin-bottom:10px; padding:10px; }
-    select, button { width: 100%; padding: 10px; font-size:16px; margin-top:5px; }
-    button { cursor: pointer; }
-    h2 { margin-bottom:5px; }
-  </style>
-</head>
-<body>
-  <h2>Multi-Language Female TTS</h2>
-  <p>Select voice and language:</p>
-
-  <textarea id="text" placeholder="Enter text here..."></textarea>
-  <select id="voiceSelect"></select>
-
-  <button onclick="speak()">▶ Speak</button>
-  <button onclick="stopSpeech()">⏹ Stop</button>
+<select id="voiceSelect"></select>
+<textarea id="text" placeholder="Enter text here..."></textarea>
+<button onclick="speak()">▶ Speak</button>
+<button onclick="stopSpeech()">⏹ Stop</button>
 
 <script>
 let voices = [];
+const select = document.getElementById('voiceSelect');
 
-function loadVoices() {
+function populateVoices() {
   voices = speechSynthesis.getVoices();
-  const select = document.getElementById('voiceSelect');
   select.innerHTML = '';
   voices.forEach((voice, i) => {
-    // Відображаємо тільки жіночі голоси
+    // тільки жіночі голоси
     if(voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('f')) {
       const option = document.createElement('option');
       option.value = i;
@@ -40,20 +21,26 @@ function loadVoices() {
   });
 }
 
-speechSynthesis.onvoiceschanged = loadVoices;
+// ⚠️ Основне: періодично перевіряємо, чи голоси завантажились
+function waitForVoices() {
+  if(speechSynthesis.getVoices().length === 0) {
+    setTimeout(waitForVoices, 200); // чекаємо 0.2 секунди
+  } else {
+    populateVoices();
+  }
+}
+waitForVoices();
 
 let currentUtterance = null;
 
 function speak() {
   const text = document.getElementById('text').value.trim();
   if(!text) return;
-
-  const index = document.getElementById('voiceSelect').value;
+  const index = select.value;
   const utter = new SpeechSynthesisUtterance(text);
   utter.voice = voices[index];
   utter.lang = utter.voice.lang;
-
-  speechSynthesis.cancel(); // зупиняємо попереднє
+  speechSynthesis.cancel();
   currentUtterance = utter;
   speechSynthesis.speak(utter);
 }
@@ -63,10 +50,4 @@ function stopSpeech() {
     speechSynthesis.cancel();
   }
 }
-
-// Завантажуємо голоси відразу
-loadVoices();
 </script>
-
-</body>
-</html>
