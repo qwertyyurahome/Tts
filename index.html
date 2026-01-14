@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>English Female TTS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 140px;
+      font-size: 16px;
+      padding: 10px;
+    }
+    select, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>English Text to Speech</h2>
+  <p>Female voices (from your phone)</p>
+
+  <textarea id="text" placeholder="Enter English text here..."></textarea>
+
+  <select id="voiceSelect"></select>
+
+  <button onclick="speak()">▶ Speak</button>
+  <button onclick="stopSpeech()">⏹ Stop</button>
+
+  <p style="font-size:14px;">
+    Voices depend on Android system voices.<br>
+    Use Chrome browser.
+  </p>
+
+<script>
+let voices = [];
+
+function loadVoices() {
+  voices = speechSynthesis.getVoices().filter(v =>
+    v.lang.startsWith('en')
+  );
+
+  const select = document.getElementById('voiceSelect');
+  select.innerHTML = '';
+
+  voices.forEach((voice, i) => {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = voice.name + ' (' + voice.lang + ')';
+    select.appendChild(option);
+  });
+}
+
+speechSynthesis.onvoiceschanged = loadVoices;
+
+function speak() {
+  const text = document.getElementById('text').value;
+  if (!text) return;
+
+  const utter = new SpeechSynthesisUtterance(text);
+  const index = document.getElementById('voiceSelect').value;
+  utter.voice = voices[index];
+  utter.lang = utter.voice.lang;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+function stopSpeech() {
+  speechSynthesis.cancel();
+}
+</script>
+
+</body>
+</html>
