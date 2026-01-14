@@ -28,13 +28,18 @@ let voices = [];
 const select = document.getElementById('voiceSelect');
 let currentUtterance = null;
 
-// Завантаження голосів з перевіркою для Android
+// Функція для завантаження голосів
 function populateVoices() {
   voices = speechSynthesis.getVoices();
   select.innerHTML = '';
+  if(voices.length === 0) {
+    console.log("Голоси ще не завантажені, чекаємо...");
+    return;
+  }
   voices.forEach((voice, i) => {
-    // Відображаємо тільки жіночі голоси
-    if(voice.name.toLowerCase().includes('female') || voice.name.toLowerCase().includes('f')) {
+    // Відображаємо всі жіночі голоси
+    const nameLower = voice.name.toLowerCase();
+    if(nameLower.includes('female') || nameLower.includes('f')) {
       const option = document.createElement('option');
       option.value = i;
       option.textContent = voice.name + ' (' + voice.lang + ')';
@@ -43,12 +48,11 @@ function populateVoices() {
   });
 }
 
-// Чекаємо, поки голоси завантажаться
+// Декілька спроб завантажити голоси для Android
 function waitForVoices() {
-  if(speechSynthesis.getVoices().length === 0) {
-    setTimeout(waitForVoices, 200);
-  } else {
-    populateVoices();
+  populateVoices();
+  if(select.options.length === 0) {
+    setTimeout(waitForVoices, 500); // повторити через 0.5 секунди
   }
 }
 waitForVoices();
@@ -59,6 +63,11 @@ function speak() {
   if(!text) return;
 
   const index = select.value;
+  if(index === undefined) {
+    alert("Голоси ще не завантажені. Спробуйте через кілька секунд.");
+    return;
+  }
+
   const utter = new SpeechSynthesisUtterance(text);
   utter.voice = voices[index];
   utter.lang = utter.voice.lang;
