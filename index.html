@@ -2,64 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Multi-Language TTS</title>
+  <title>Premium Female TTS with MP3 Download</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; background: #f2f2f2; padding: 20px; }
-    textarea { width: 100%; height: 140px; font-size: 16px; padding: 10px; margin-bottom: 10px; }
-    select, button { width: 100%; margin-top: 10px; padding: 10px; font-size: 16px; }
+    body { font-family: Arial; padding: 20px; background: #f9f9f9; }
+    textarea { width: 100%; height: 120px; font-size:16px; margin-bottom:10px; }
+    select, button { width: 100%; padding: 10px; font-size:16px; margin-top:5px; }
     button { cursor: pointer; }
-    h2 { margin-bottom: 5px; }
   </style>
 </head>
 <body>
-
-  <h2>Text to Speech (Multi-Language)</h2>
-  <p>Select voice and language:</p>
-
+  <h2>Premium Female TTS</h2>
   <textarea id="text" placeholder="Enter text here..."></textarea>
-  <select id="voiceSelect"></select>
+
+  <select id="voiceSelect">
+    <option value="en-US-Wavenet-F">US English Female</option>
+    <option value="en-GB-Wavenet-F">UK English Female</option>
+    <option value="uk-UA-Wavenet-F">Ukrainian Female</option>
+  </select>
 
   <button onclick="speak()">▶ Speak</button>
   <button onclick="stopSpeech()">⏹ Stop</button>
+  <button onclick="downloadMP3()">⬇ Download MP3</button>
 
-  <p style="font-size:14px;">Voices depend on your system. Use Chrome on Android for best results.</p>
+  <audio id="audio" controls style="width:100%; margin-top:10px;"></audio>
 
 <script>
-let voices = [];
+const DEMO_TTS_SERVER = 'https://tts-demo.pages.dev/speak'; // demo сервер
+let currentAudio = null;
+let lastBlob = null;
 
-function loadVoices() {
-  voices = speechSynthesis.getVoices(); // отримуємо всі голоси
-  const select = document.getElementById('voiceSelect');
-  select.innerHTML = '';
-  voices.forEach((voice, i) => {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = voice.name + ' (' + voice.lang + ')'; // показуємо назву та мову
-    select.appendChild(option);
-  });
-}
+async function speak() {
+  const text = document.getElementById('text').value.trim();
+  const voice = document.getElementById('voiceSelect').value;
+  if(!text) return;
 
-speechSynthesis.onvoiceschanged = loadVoices;
+  const audioElem = document.getElementById('audio');
 
-function speak() {
-  const text = document.getElementById('text').value;
-  if (!text) return;
-  const utter = new SpeechSynthesisUtterance(text);
-  const index = document.getElementById('voiceSelect').value;
-  utter.voice = voices[index];
-  utter.lang = utter.voice.lang;
-  speechSynthesis.cancel(); // зупиняємо попередній звук
-  speechSynthesis.speak(utter);
+  try {
+    const response = await fetch(DEMO_TTS_SERVER, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: text, voice: voice})
+    });
+
+    const blob = await response.blob();
+    lastBlob = blob; // зберігаємо для скачування
+    const url = URL.createObjectURL(blob);
+    audioElem.src = url;
+    audioElem.play();
+    currentAudio = audioElem;
+  } catch(err) {
+    alert('Error with TTS server: ' + err);
+  }
 }
 
 function stopSpeech() {
-  speechSynthesis.cancel(); // зупиняємо озвучку
+  if(currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+  }
 }
 
-// Завантажуємо голоси одразу
-loadVoices();
+function downloadMP3() {
+  if(!lastBlob) {
+    alert('Please generate audio first!');
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(lastBlob);
+  link.download = 'tts_audio.mp3';
+  link.click();
+}
 </script>
-
 </body>
 </html>
